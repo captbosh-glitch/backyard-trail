@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Designing Backyard &amp; Trail</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap">
+<meta name="description" content="Case study: how a risky plant-and-wildlife scanner became a safety-first field guide built on real sightings.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Designing Backyard &amp; Trail">
+<meta property="og:description" content="How a risky plant-and-wildlife scanner became a safety-first field guide built on real sightings.">
+<meta property="og:url" content="https://captbosh-glitch.github.io/backyard-trail/case-study/">
+<meta property="og:image" content="https://captbosh-glitch.github.io/backyard-trail/case-study/img/app-guide.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../icons/favicon.svg" type="image/svg+xml">
+<link rel="canonical" href="https://captbosh-glitch.github.io/backyard-trail/case-study/">
+<style>
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; }
+img { max-width: 100%; }
+
+/* Layout: a long-read in the product's own field-guide language. A forest band opens it, chapters run
+   down a 680px reading column, and screenshots break out wider, with before/after pairs side by side.
+   Single light theme on purpose: it shows the product as designed. */
+:root {
+  --paper: #f4f4ec; --card: #fffef9; --ink: #17352b; --muted: #56665d; --faint: #7b8780; --line: #dde0d7;
+  --forest: #17352b; --forest-ink: #f4f4ec; --forest-muted: #a9b9ae; --terra: #c9552f; --gold: #e5b256; --sage: #d8dec4;
+  --sev-critical: #992d1b; --sev-severe: #aa4a34; --sev-high: #8f561d; --sev-moderate: #75611f;
+  --pill-critical: #f6d6cc; --pill-severe: #f8ddd4; --pill-high: #f6e3cf; --pill-moderate: #f4e8be;
+  --display: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+  --body: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font: 17px/1.65 var(--body); -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+p { margin: 0; }
+a { color: var(--terra); text-underline-offset: 3px; }
+.gutter { padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+.col { max-width: 680px; margin: 0 auto; }
+.wide { max-width: 1120px; margin: 0 auto; }
+.eyebrow { display: flex; align-items: center; gap: 10px; font-size: 11.5px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--terra); }
+.eyebrow::before { content: ""; width: 26px; height: 1px; background: currentColor; }
+
+/* hero */
+.hero { background: var(--forest); color: var(--forest-ink); }
+.hero .wide { padding-block: 72px 0; }
+.hero .eyebrow { color: #e9875f; }
+.hero h1 { font-size: clamp(54px, 9vw, 112px); line-height: .92; margin-top: 20px; }
+.hero h1 em { color: #e9875f; }
+.hero .dek { font-size: clamp(19px, 2.2vw, 23px); line-height: 1.45; max-width: 34em; margin-top: 22px; color: #dfe5dc; }
+.meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 18px 28px; margin-top: 40px; padding-top: 24px; border-top: 1px solid rgb(244 244 236 / .18); }
+.meta dt { font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--forest-muted); }
+.meta dd { margin: 4px 0 0; font-size: 15px; }
+.hero figure { margin: 48px 0 0; }
+.hero figure img { display: block; width: 100%; max-width: 100%; border-radius: 12px 12px 0 0; box-shadow: 0 -10px 40px rgb(0 0 0 / .25); }
+
+/* chapters */
+section { padding-block: 72px 8px; }
+section h2 { font-size: clamp(34px, 4.6vw, 48px); line-height: 1.05; margin-top: 12px; }
+.col > p, .col > ul, .col > ol { margin-top: 18px; }
+.lead { font-size: 20px; line-height: 1.55; }
+ul.rules { list-style: none; padding: 0; display: grid; gap: 14px; margin-top: 26px; }
+ul.rules li { padding: 16px 20px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+ul.rules b { display: block; font-family: var(--display); font-weight: 400; font-size: 23px; line-height: 1.2; }
+.pull { font-family: var(--display); font-size: clamp(28px, 3.6vw, 38px); line-height: 1.2; color: var(--forest); margin-top: 34px; padding-left: 20px; border-left: 3px solid var(--terra); }
+
+/* risk table from the original brief */
+.tablewrap { overflow-x: auto; margin-top: 26px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+table { width: 100%; border-collapse: collapse; font-size: 15px; min-width: 520px; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); font-weight: 700; }
+tr:last-child td { border-bottom: 0; }
+td:first-child { font-weight: 600; white-space: nowrap; }
+
+/* figures */
+figure { margin: 34px 0 0; }
+figure img { display: block; width: 100%; max-width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); background: var(--card); }
+figcaption { font-size: 14px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+figcaption b { color: var(--ink); }
+.trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.pair.phone { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: center; }
+.tag { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; margin-bottom: 8px; }
+.tag.before { background: var(--line); color: var(--muted); }
+.tag.after { background: var(--sage); color: var(--forest); }
+.phones { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.phones img, .pair.phone .shot img { border-radius: 18px; }
+@media (max-width: 760px) {
+  .trio, .pair, .pair.phone { grid-template-columns: 1fr; }
+  .phones { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero .wide { padding-block: 48px 0; }
+}
+
+/* critique list */
+.critique { display: grid; gap: 0; margin-top: 26px; border-top: 1px solid var(--line); }
+.critique div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 8px 24px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+.critique b { font-family: var(--display); font-weight: 400; font-size: 22px; line-height: 1.2; }
+.critique p { color: var(--muted); font-size: 15.5px; }
+@media (max-width: 600px) { .critique div { grid-template-columns: 1fr; } }
+
+/* decisions */
+.decision { padding-top: 56px; }
+.decision h3 { font-size: clamp(28px, 3.4vw, 34px); line-height: 1.1; margin-top: 10px; }
+.num { font-family: var(--display); font-size: 20px; color: var(--terra); }
+
+/* the harm scale, rebuilt live */
+.scale { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 24px; }
+.scale > div { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px; font-size: 14px; color: var(--muted); }
+.lv { display: inline-flex; align-items: center; gap: 7px; padding: 4px 8px; border-radius: 4px; font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 8px; }
+.meter { display: inline-flex; gap: 2px; }
+.meter i { width: 4px; height: 10px; border-radius: 1px; background: color-mix(in srgb, currentColor 22%, transparent); }
+.lv-critical { color: var(--sev-critical); background: var(--pill-critical); } .lv-critical .meter i:nth-child(-n+4) { background: currentColor; }
+.lv-severe { color: var(--sev-severe); background: var(--pill-severe); } .lv-severe .meter i:nth-child(-n+3) { background: currentColor; }
+.lv-high { color: var(--sev-high); background: var(--pill-high); } .lv-high .meter i:nth-child(-n+2) { background: currentColor; }
+.lv-moderate { color: var(--sev-moderate); background: var(--pill-moderate); } .lv-moderate .meter i:nth-child(-n+1) { background: currentColor; }
+
+/* stats from real sightings */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 26px; }
+.stats div { background: var(--forest); color: var(--forest-ink); border-radius: 10px; padding: 16px 18px; }
+.stats b { display: block; font-family: var(--display); font-weight: 400; font-size: 44px; line-height: 1; color: var(--gold); font-variant-numeric: tabular-nums; }
+.stats span { font-size: 13.5px; color: #cfd8d1; display: block; margin-top: 6px; }
+
+/* process timeline */
+ol.steps { list-style: none; padding: 0; margin-top: 26px; display: grid; gap: 0; counter-reset: s; }
+ol.steps li { counter-increment: s; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px 16px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+ol.steps li::before { content: counter(s); grid-row: 1 / 3; width: 36px; height: 36px; border-radius: 50%; background: var(--sage); color: var(--forest); display: grid; place-items: center; font-family: var(--display); font-size: 20px; }
+ol.steps b { font-weight: 600; }
+ol.steps span { color: var(--muted); font-size: 15.5px; }
+
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-top: 26px; }
+.split > div { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; }
+.split h3 { font-size: 24px; }
+.split ul { margin: 10px 0 0; padding-left: 18px; color: var(--muted); font-size: 15.5px; display: grid; gap: 6px; }
+@media (max-width: 600px) { .split { grid-template-columns: 1fr; } }
+
+footer { margin-top: 88px; background: var(--forest); color: var(--forest-muted); font-size: 14px; }
+footer .col { padding-block: 40px 56px; display: grid; gap: 10px; }
+footer b { color: var(--forest-ink); font-weight: 600; }
+footer a { color: var(--forest-ink); }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wide gutter">
+    <p class="eyebrow">Case study · Product design · <a href="../" style="color:inherit">Open the app</a></p>
+    <h1>Backyard <em>&amp;</em> Trail</h1>
+    <p class="dek">A wilderness awareness guide that shows the dangerous plants, wildlife and fungi documented near you, and never tells you anything is safe.</p>
+    <dl class="meta">
+      <div><dt>My role</dt><dd>Concept, UX and visual design</dd></div>
+      <div><dt>Built with</dt><dd>Claude, for critique and engineering</dd></div>
+      <div><dt>Tools &amp; data</dt><dd>Figma, iNaturalist, OpenStreetMap</dd></div>
+      <div><dt>Status</dt><dd><a href="https://captbosh-glitch.github.io/backyard-trail/" target="_blank" rel="noopener" style="color:#e9875f">Live web app</a>, October 2026</dd></div>
+    </dl>
+    <figure><img src="img/app-guide.jpg" alt="The regional guide for Jenny Lake in Grand Teton National Park: a map of real sightings within 10 miles, and cards for grizzly bear and mountain lion with harm levels and sighting counts." width="1400" height="923"></figure>
+  </div>
+</header>
+
+<main>
+  <section class="gutter">
+    <div class="col">
+      <p class="eyebrow">The idea</p>
+      <h2>A scanner that could get people hurt</h2>
+      <p class="lead">It started as a pet-safety scanner: point your phone at a plant and find out whether it will hurt your dog. Widening it to hikers, campers and parents made it far more useful, and far more dangerous to get wrong.</p>
+      <p>Plants are easy to catalog. Mushrooms, berries and moving animals are not, and the cost of a wrong answer climbs fast:</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Category</th><th>Why it’s hard</th><th>Cost of a wrong answer</th></tr></thead>
+        <tbody>
+          <tr><td>Mushrooms &amp; berries</td><td>Deadly species look nearly identical to edible ones</td><td>Organ failure or death</td></tr>
+          <tr><td>Snakes</td><td>Blurry photos of moving animals in mud and shade</td><td>A fatal delay in treatment</td></tr>
+          <tr><td>Toads</td><td>A few species are lethal to a dog that mouths them</td><td>A pet’s life</td></tr>
+          <tr><td>Plants</td><td>Consistent patterns, easy to catalog</td><td>Usually a rash</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <section class="gutter">
+    <div class="col">
+      <p class="eyebrow">The pivot</p>
+      <h2>Awareness, not identification</h2>
+      <p class="lead">An app that guesses wrong about a mushroom can kill someone. So this one never guesses. It doesn’t answer “What is this?” It answers “What’s been documented around here, and what do I do about it?”</p>
+      <ul class="rules">
+        <li><b>Never say safe.</b>No “edible,” “harmless” or “non-venomous” anywhere in the product.</li>
+        <li><b>Show what’s documented, not what it thinks it sees.</b>Real sightings near a real place, so people plan before they go.</li>
+        <li><b>Make the right action one tap away.</b>How to stay clear, what to do if someone is exposed, and who to call.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="gutter">
+    <div class="col">
+      <p class="eyebrow">First pass</p>
+      <h2>Five screens in Figma</h2>
+      <p>I designed the core flow: welcome, log in, choose a location, regional results and a safe-distance camera. The visual language came from old field guides: deep forest green, a warm paper background, a characterful serif, and terracotta for anything you can act on.</p>
+    </div>
+    <div class="wide">
+      <figure class="trio">
+        <div><img src="img/mock-welcome.jpg" alt="Figma mockup of the welcome screen: Explore with confidence, with a map card for the Blue Ridge foothills." width="1200" height="759"></div>
+        <div><img src="img/mock-results.jpg" alt="Figma mockup of regional results for the Blue Ridge Parkway, with a map and four hazard cards." width="1200" height="1296"></div>
+        <div><img src="img/mock-camera.jpg" alt="Figma mockup of the safe-distance camera dialog asking What did you spot?" width="1200" height="759"></div>
+      </figure>
+      <figcaption class="col"><b>The original mockups.</b> Welcome, regional results and the camera.</figcaption>
+    </div>
+  </section>
+
+  <section class="gutter">
+    <div class="col">
+      <p class="eyebrow">Critique</p>
+      <h2>What didn’t hold up</h2>
+      <p>The look was right. Reviewing the screens against the safety rules turned up places where the design quietly broke them.</p>
+      <div class="critique">
+        <div><b>The camera said “Identify”</b><p>“What did you spot?” invited the exact guess the product had ruled out, on the riskiest screen in the app.</p></div>
+        <div><b>The numbers disagreed</b><p>“12 known hazards” sat above “4 documented threats,” and the cards described distance four different ways.</p></div>
+        <div><b>Harm levels relied on color</b><p>Severe, Critical and High were all small red pills, and the map legend had two colors for four levels.</p></div>
+        <div><b>Emergency help was a footnote</b><p>Poison Control lived in 10-pixel text at the bottom of the results.</p></div>
+        <div><b>The pet owner disappeared</b><p>The idea began with dogs, but no screen considered them.</p></div>
+        <div><b>It was desktop-only</b><p>A trail app gets used on a phone, often with one bar of signal or none.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="gutter">
+    <div class="col">
+      <p class="eyebrow">Decisions</p>
+      <h2>Eight changes that made it trustworthy</h2>
+    </div>
+
+    <div class="col decision">
+      <span class="num">01</span><h3>From “Identify” to “Compare”</h3>
+      <p>The camera became “Compare a photo.” A dashed ring in the viewfinder reminds people to keep six feet away. After the shot, the app lists what’s documented within 10 miles in that group, with real photos to compare against, under a “Treat it as dangerous” banner. Photos never leave the phone.</p>
+    </div>
+    <div class="wide">
+      <figure class="pair phone">
+        <div><span class="tag before">Before</span><img src="img/mock-camera.jpg" alt="Mockup: What did you spot? camera dialog." width="1200" height="759"></div>
+        <div class="shot"><span class="tag after">After</span><img src="img/phone-cam.jpg" alt="App on a phone: Documented mammals near here, with a Treat it as dangerous warning and photos of grizzly bear, mountain lion and moose." width="560" height="1212"></div>
+      </figure>
+    </div>
+
+    <div class="col decision">
+      <span class="num">02</span><h3>A harm scale you can read without color</h3>
+      <p>Four levels, each with a written label, a four-step meter and a plain-language meaning. Every hazard is rated twice, for people and for dogs, because the risks differ: a cane toad is a High risk to people and a Critical one to a dog.</p>
+      <div class="scale" aria-label="The four harm levels">
+        <div><span class="lv lv-critical"><span class="meter"><i></i><i></i><i></i><i></i></span>Critical</span><br>Can be fatal. Call 911 or Poison Control right away.</div>
+        <div><span class="lv lv-severe"><span class="meter"><i></i><i></i><i></i><i></i></span>Severe</span><br>Needs emergency medical care.</div>
+        <div><span class="lv lv-high"><span class="meter"><i></i><i></i><i></i><i></i></span>High</span><br>Can cause serious illness or injury.</div>
+        <div><span class="lv lv-moderate"><span class="meter"><i></i><i></i><i></i><i></i></span>Moderate</span><br>Painful or irritating. Usually treated at home.</div>
+      </div>
+    </div>
+
+    <div class="col decision">
+      <span class="num">03</span><h3>Real numbers, from real sightings</h3>
+      <p>Every count on screen now comes from iNaturalist’s research-grade sightings within 10 miles of the place you pick, for the 40 most dangerous species in the guide. The header count always matches the list, and each card says how many times the species was seen nearby. Some numbers from the live app:</p>
+      <div class="stats">
+        <div><b>1,760</b><span>moose sightings near Jenny Lake, Grand Teton</span></div>
+        <div><b>3,411</b><span>alligator sightings near the Everglades’ Royal Palm area</span></div>
+        <div><b>45</b><span>copperhead sightings around Craggy Gardens on the Blue Ridge</span></div>
+      </div>
+    </div>
+    <div class="wide">
+      <figure><img src="img/app-detail.jpg" alt="Detail view for the moose: a photo, harm levels for people and dogs, and Common, 1,760 sightings within 10 miles." width="1400" height="923">
+        <figcaption><b>Every hazard opens to a field-guide entry:</b> a credited photo, both harm levels, how common it is nearby, what to look for from a distance, how to stay clear, first steps if someone is exposed, and what it’s often confused with.</figcaption></figure>
+    </div>
+
+    <div class="col decision">
+      <span class="num">04</span><h3>Hiking with a dog</h3>
+      <p>One switch brings the original pet owner back. Harm levels change to the risk for dogs, the list re-sorts, and each card adds dog-specific advice, like rinsing a dog’s mouth with the hose aimed forward after it mouths a cane toad.</p>
+    </div>
+    <div class="wide">
+      <figure><img src="img/app-dog.jpg" alt="Everglades guide with Hiking with a dog turned on: cane toad, eastern diamondback and coral snake rated Critical for dogs, each with dog-specific advice." width="1400" height="923"></figure>
+    </div>
+
+    <div class="col decision">
+      <span class="num">05</span><h3>Help is always one tap away</h3>
+      <p>A red Emergency button floats on every guide screen. It opens 911, Poison Control and the ASPCA pet poison line, with what to tell them and what to do with no signal.</p>
+    </div>
+    <div class="col decision">
+      <span class="num">06</span><h3>It works with no signal</h3>
+      <p>“Save for offline” keeps a place’s field guide, photos and illustrations on the phone. Without a connection, the guide still opens, says when it was saved, and explains that only the map needs signal.</p>
+    </div>
+    <div class="col decision">
+      <span class="num">07</span><h3>Asking before the phone asks</h3>
+      <p>Before the browser’s permission prompt, a short screen explains what the app will use and exactly what leaves the phone. Every dead end has a way forward: a blocked camera falls back to choosing a photo, a place that isn’t found suggests what to try, and an offline place that isn’t saved points to saved packs.</p>
+    </div>
+    <div class="col decision">
+      <span class="num">08</span><h3>No account needed</h3>
+      <p>The mockups opened with a login. I weighed what an account would add, mainly syncing saved places between devices, against what it costs: storing where people go, and a password prompt at the trailhead. The app stays free and open to everyone, with no sign-up. Saved places, offline packs and preferences like dog mode or a sting allergy stay on the phone. People move saved places between devices by exporting a small file or sharing a link, and one screen explains in plain words what is sent where.</p>
+    </div>
+    <div class="wide">
+      <figure class="phones">
+        <img src="img/phone-sos.jpg" alt="Emergency numbers sheet on a phone." width="560" height="1212">
+        <img src="img/phone-saved.jpg" alt="Saved places on a phone, with an offline pack for Everglades National Park." width="560" height="1212">
+        <img src="img/phone-gps.jpg" alt="Location explainer: Find hazards around you, with what is sent where." width="560" height="1212">
+        <img src="img/phone-search.jpg" alt="Search results for Mount Rainier, offering Washington and Maryland." width="560" height="1212">
+      </figure>
+      <figcaption class="col"><b>Mobile first.</b> Emergency numbers, offline packs, the location explainer and place search.</figcaption>
+    </div>
+  </section>
+
+  <section class="gutter">
+    <div class="col">
+      <p class="eyebrow">Craft</p>
+      <h2>A field guide, not a dashboard</h2>
+      <p>I sourced engraved illustrations for every kind of hazard, from coiled snakes to a bull elk, so the results read like pages of an old field guide. Claude cleaned them for the cards: removing backgrounds, a stock watermark grid and stray marks, and tinting them to the palette’s green. Every hazard also has a freely licensed, credited photo from Wikimedia Commons, cropped so heads, caps and flowers stay in frame.</p>
+    </div>
+    <div class="wide">
+      <figure class="pair phone">
+        <div><img src="img/app-welcome.jpg" alt="The welcome screen in the finished app." width="1400" height="514"></div>
+        <div class="shot"><img src="img/phone-cards.jpg" alt="Result cards on a phone with engraved illustrations of a rattlesnake, coral snake and alligator." width="560" height="1212"></div>
+      </figure>
+    </div>
+  </section>
+
+  <section class="gutter">
+    <div class="col">
+      <p class="eyebrow">Process</p>
+      <h2>From mockup to working app</h2>
+      <ol class="steps">
+        <li><b>Figma mockups</b><span>Five screens and the visual language.</span></li>
+        <li><b>Critique and a clickable prototype</b><span>The safety review above, applied to a prototype with sample regions.</span></li>
+        <li><b>Refinement</b><span>Colors sampled from the mockups, field-guide illustrations, real photos and a phone layout.</span></li>
+        <li><b>More of the country</b><span>The Northern Rockies and South Florida, ZIP lookup, and animals like moose, wolves and alligators.</span></li>
+        <li><b>A real web app</b><span>Any U.S. place, live iNaturalist sightings, a real map, a live camera and offline packs that work without signal.</span></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="gutter">
+    <div class="col">
+      <p class="eyebrow">Collaboration</p>
+      <h2>Working with Claude</h2>
+      <div class="split">
+        <div><h3>My calls</h3><ul><li>The concept and its safety rules</li><li>The Figma mockups and visual language</li><li>The illustrations and their style</li><li>Which regions, animals and features to add, and keeping it account-free</li></ul></div>
+        <div><h3>Claude’s work</h3><ul><li>Design critique against the safety rules</li><li>The prototype and the web app</li><li>Sightings, maps and offline storage</li><li>Checking every screen at phone size</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="gutter">
+    <div class="col">
+      <p class="eyebrow">Next</p>
+      <h2>What I’d do before a wide release</h2>
+      <ul>
+        <li><b>Expert review</b> of every harm level and first-aid step, with herpetologists, mycologists and Poison Control.</li>
+        <li><b>Field testing</b> with hikers and dog owners on real trails, with real signal problems.</li>
+        <li><b>Photo matching</b> that ranks only the species documented nearby, run on a server so it can use AI safely.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer class="gutter">
+  <div class="col">
+    <p><b>Backyard &amp; Trail</b> · Concept and product design by Pat, October 2026. Try it at <a href="https://captbosh-glitch.github.io/backyard-trail/" target="_blank" rel="noopener">captbosh-glitch.github.io/backyard-trail</a>.</p>
+    <p>Sightings from <a href="https://www.inaturalist.org" target="_blank" rel="noopener">iNaturalist</a>. Places and map from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors. Species photos by Wikimedia Commons contributors, credited in the app.</p>
+    <p>Harm levels and advice are educational guidance, not medical advice.</p>
+  </div>
+</footer>
+</body>
+</html>

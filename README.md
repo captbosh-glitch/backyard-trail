@@ -6,6 +6,9 @@ what to do if someone is exposed, and advice for hiking with a dog.
 
 It's built for awareness, not identification: the guide never says anything is safe to touch or eat.
 
+- **Live app:** https://captbosh-glitch.github.io/backyard-trail/
+- **Case study:** https://captbosh-glitch.github.io/backyard-trail/case-study/ (source in `case-study/`)
+
 ## How it works
 
 - **Places:** OpenStreetMap Nominatim (search, your location) and Zippopotam.us (ZIP codes).
