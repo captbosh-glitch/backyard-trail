@@ -345,3 +345,22 @@ p { margin: 0; }
 .disclaimer a { color: inherit; }
 /* soften OpenStreetMap's colors toward the field-guide palette */
 .map.live .leaflet-tile-pane { filter: saturate(.55) sepia(.18) brightness(1.03); }
+
+/* no-account screen and device preferences */
+.privacy .h2 { font-family: var(--display); font-weight: 400; font-size: 28px; margin-top: 36px; }
+.privacy > p { margin-top: 10px; max-width: 62ch; color: var(--muted); }
+.kept { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 10px; }
+.kept li { display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px; border-radius: 10px; background: var(--card); border: 1px solid var(--line); }
+.kept li .ico { width: 22px; height: 22px; color: var(--forest); margin-top: 2px; flex-shrink: 0; }
+.kept b, .pref b, .move b { display: block; }
+.kept span, .pref small, .move small { color: var(--muted); font-size: 14px; }
+.prefs { display: grid; gap: 10px; margin-top: 14px; }
+.pref { display: flex; gap: 14px; align-items: flex-start; width: 100%; text-align: left; padding: 14px 16px; border-radius: 10px; background: var(--card); border: 1px solid var(--line); }
+.pref .sw { width: 38px; height: 22px; border-radius: 999px; background: var(--line); position: relative; flex-shrink: 0; margin-top: 2px; transition: background .15s; }
+.pref .sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--card); box-shadow: 0 1px 2px rgb(0 0 0 / .25); transition: transform .15s; }
+.pref[aria-checked="true"] { border-color: var(--forest); }
+.pref[aria-checked="true"] .sw { background: var(--forest); }
+.pref[aria-checked="true"] .sw::after { transform: translateX(16px); }
+.move { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-top: 18px; padding: 14px 16px; border-radius: 10px; border: 1px dashed var(--line); }
+.hz .petline.allergy { color: var(--sev-critical); }
+.privacy a, .saved a { color: var(--terra); text-underline-offset: 3px; }

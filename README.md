@@ -17,6 +17,12 @@ It's built for awareness, not identification: the guide never says anything is s
 - **Camera:** a live viewfinder with a 6-foot guide ring where the browser allows it; otherwise the phone's camera
   app. Photos never leave the phone.
 
+## No account needed
+
+There are no accounts, on purpose. Saved places, offline packs and preferences (dog mode, a sting allergy) stay
+on the device. To move saved places to another device, export them as a file from the Saved screen and import it
+there, or copy a link to any place. The "No account needed" screen explains exactly what's sent where.
+
 No build step: `index.html`, `app.css`, `data.js` (guide entries, icons, credits) and `app.js` (screens and logic).
 To run it locally: `python3 -m http.server` in this folder, then open http://localhost:8000.
 

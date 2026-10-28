@@ -5,7 +5,9 @@
 const RADIUS_KM = 16;          // about 10 miles
 const INAT = 'https://api.inaturalist.org/v1';
 const NOMINATIM = 'https://nominatim.openstreetmap.org';
-const STORE = { recent: 'bt-recent', packs: 'bt-packs', seenCam: 'bt-cam-ok', seenGps: 'bt-gps-ok' };
+const STORE = { recent: 'bt-recent', packs: 'bt-packs', prefs: 'bt-prefs', seenCam: 'bt-cam-ok', seenGps: 'bt-gps-ok' };
+// With a sting allergy noted on this device, these are critical for the person hiking.
+const STINGS = ['yellowjacket', 'bees'];
 
 // ---------- small helpers ----------
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -14,7 +16,10 @@ const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } cat
 const cap = s => s[0].toUpperCase() + s.slice(1);
 const placeKey = p => `${p.lat.toFixed(3)},${p.lng.toFixed(3)}`;
 const fmtDate = t => new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-const levelOf = h => state.dog ? h.pet : h.level;
+const prefs = () => load(STORE.prefs, { dog: false, stings: false });
+const setPref = (k, v) => save(STORE.prefs, { ...prefs(), [k]: v });
+const allergic = h => !state.dog && prefs().stings && STINGS.includes(h.id);
+const levelOf = h => state.dog ? h.pet : allergic(h) ? 'critical' : h.level;
 const tier = n => n == null ? 'documented' : n >= 25 ? 'common' : n >= 5 ? 'occasional' : 'uncommon';
 
 async function getJSON(url, signal) {
@@ -34,7 +39,7 @@ function toast(msg) {
 // ---------- state ----------
 const state = {
   screen: 'welcome', place: null, guide: null, loading: false, error: '', fromPack: null,
-  cat: 'all', dog: false, sort: 'risk', map: true,
+  cat: 'all', dog: !!load(STORE.prefs, {}).dog, sort: 'risk', map: true,
   search: '', results: null, searchMsg: '', busy: false,
   online: navigator.onLine,
 };
@@ -120,14 +125,44 @@ function advisoryFor(place, list) {
 // ---------- offline packs ----------
 // A pack keeps a place's guide data on this device; the service worker keeps its photos and illustrations.
 const packs = () => load(STORE.packs, {});
+async function cacheMedia(guide) {
+  if (!('caches' in window)) return;
+  const ids = hazardList(guide).map(h => h.id);
+  const files = [...new Set(ids.flatMap(id => [`photos/${id}.jpg`, ART[IC[id]] ? `art/${ART[IC[id]]}.png` : null]).filter(Boolean))];
+  try { const c = await caches.open('bt-media-v1'); await c.addAll(files); } catch {}
+}
 async function savePack(place, guide) {
   const all = packs(); all[placeKey(place)] = { place, guide, savedAt: Date.now() }; save(STORE.packs, all);
-  if ('caches' in window) {
-    const ids = hazardList(guide).map(h => h.id);
-    const files = [...new Set(ids.flatMap(id => [`photos/${id}.jpg`, ART[IC[id]] ? `art/${ART[IC[id]]}.png` : null]).filter(Boolean))];
-    try { const c = await caches.open('bt-media-v1'); await c.addAll(files); } catch {}
-  }
+  await cacheMedia(guide);
 }
+// Moving saved places to another device, without an account: a small file you export and import.
+function exportPacks() {
+  const blob = new Blob([JSON.stringify({ app: 'backyard-trail', version: 1, exported: Date.now(), packs: packs() }, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `backyard-trail-saved-places-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+async function importPacks(file) {
+  let data;
+  try { data = JSON.parse(await file.text()); } catch { return toast('That file isn’t a Backyard & Trail export.'); }
+  if (data?.app !== 'backyard-trail' || typeof data.packs !== 'object') return toast('That file isn’t a Backyard & Trail export.');
+  const all = packs(); let added = 0;
+  for (const [k, pk] of Object.entries(data.packs)) {
+    const ok = pk?.place && isFinite(pk.place.lat) && isFinite(pk.place.lng) && pk.guide?.counts && typeof pk.guide.counts === 'object';
+    if (!ok) continue;
+    // keep only fields the app knows, and only guide entries that exist
+    const counts = Object.fromEntries(Object.entries(pk.guide.counts).filter(([id, n]) => H[id] && Number.isFinite(n)));
+    const byState = (pk.guide.byState || []).filter(id => BY_STATE[id]);
+    const points = (pk.guide.points || []).filter(p => H[p.id] && isFinite(p.lat) && isFinite(p.lng)).slice(0, 200);
+    const place = { name: String(pk.place.name || 'Saved place').slice(0, 120), short: String(pk.place.short || pk.place.name || 'Saved place').slice(0, 80),
+      lat: +pk.place.lat, lng: +pk.place.lng, state: String(pk.place.state || '').slice(0, 2), sample: SAMPLES[pk.place.sample] ? pk.place.sample : undefined };
+    const guide = { counts, byState, points, fetched: +pk.guide.fetched || Date.now() };
+    if (!all[k] || (all[k].savedAt || 0) < (pk.savedAt || 0)) { all[k] = { place, guide, savedAt: +pk.savedAt || Date.now() }; added++; cacheMedia(guide); }
+  }
+  save(STORE.packs, all); render();
+  toast(added ? `Added ${added} saved place${added === 1 ? '' : 's'}.` : 'Those places were already saved here.');
+}
+const placeLink = p => `${location.origin}${location.pathname}?${new URLSearchParams({ at: `${p.lat.toFixed(4)},${p.lng.toFixed(4)}`, name: p.name, st: p.state || '', s: p.sample || '' })}`;
 function removePack(key) { const all = packs(); delete all[key]; save(STORE.packs, all); }
 
 // ---------- screens ----------
@@ -146,25 +181,43 @@ function welcome() {
     <div><p class="eyebrow">Know before you go</p>
       <h1 class="display" style="margin-top:18px">Explore with <em>confidence.</em></h1>
       <p class="lede">See the plants, wildlife and natural hazards documented near your backyard, your trail or your next destination, before you get there.</p>
-      <div class="cta"><button class="btn primary" data-act="start">Find a place ${icon('arrow')}</button><button class="btn" data-act="login">Log in</button></div>
-      <p class="fine">No account needed. Sightings come from iNaturalist, a community of naturalists and scientists.</p></div>
+      <div class="cta"><button class="btn primary" data-act="start">Find a place ${icon('arrow')}</button><button class="btn" data-act="privacy">${icon('shield')} No account needed</button></div>
+      <p class="fine">Free and open to everyone. Your location and photos stay on your phone.</p></div>
     <div class="mapcard" aria-hidden="true">${mapSVG({ name: demo.name, terrain: 'forest', water: true }, fakeList)}
       <div class="foot"><div><small>Regional profile</small><strong>Blue Ridge foothills</strong></div><div class="bignum"><b>13</b><span>documented<br>hazards</span></div></div></div>
   </main>
   <div class="strip"><div class="wrap"><span>${icon('shield')} Educational guidance</span><span>${icon('pin')} Real sightings near you</span><span>${icon('check')} Safety-first recommendations</span></div></div>`;
 }
 
-function login() {
-  return `<div class="loginpage"><div class="wrap"><button class="backlink" data-act="home">${icon('back')} Back</button>
-    <div class="panel login"><span class="brand" style="justify-content:center"><span class="mark">${icon('shield')}</span><span>Backyard <span class="amp">&amp;</span> Trail</span></span>
-      <p class="eyebrow">Accounts</p><h1>Accounts are coming soon</h1>
-      <p class="sub">For now, everything you save stays on this device: recent places and offline packs. Nothing you search for is tied to you.</p>
-      <div style="display:grid;gap:12px;margin-top:26px">
-        <button class="btn primary block" data-act="start">Find a place ${icon('arrow')}</button>
-        <button class="btn block" data-act="saved">${icon('download')} See saved places</button>
-      </div>
-      <p class="legal">This guide is educational and not a substitute for emergency or medical advice.</p>
-    </div></div></div>`;
+function privacy() {
+  const pf = prefs();
+  const sw = (k, label, sub) => `<button class="pref" role="switch" aria-checked="${!!pf[k]}" data-act="pref" data-id="${k}"><span class="sw" aria-hidden="true"></span><span><b>${label}</b><small>${sub}</small></span></button>`;
+  return header() + `<main class="wrap saved privacy">
+    <button class="backlink" data-act="${state.place ? 'back-guide' : 'home'}">${icon('back')} ${state.place ? 'Back to guide' : 'Back'}</button>
+    <p class="eyebrow" style="margin-top:12px">Free and open to everyone</p><h1 class="display small">No account needed</h1>
+    <p class="lede">Backyard &amp; Trail works without signing up. There’s no password to remember at the trailhead, and nothing about where you go is tied to you.</p>
+
+    <h2 class="h2">On your phone, and nowhere else</h2>
+    <ul class="kept">
+      <li>${icon('download')}<span><b>Saved places and offline packs</b>Kept on this device so they work without signal.</span></li>
+      <li>${icon('camera')}<span><b>Photos you take</b>Never uploaded. Comparing happens on your phone.</span></li>
+      <li>${icon('dog')}<span><b>Your preferences</b>Dog mode and allergy notes, below.</span></li>
+    </ul>
+
+    <h2 class="h2">What the app looks up for you</h2>
+    <p>To find sightings, the app sends the place you pick, or your location if you allow it, to <a href="https://www.inaturalist.org/pages/privacy" target="_blank" rel="noopener">iNaturalist</a>. To name places and draw maps, it uses <a href="https://osmfoundation.org/wiki/Privacy_Policy" target="_blank" rel="noopener">OpenStreetMap</a> and Zippopotam for ZIP codes. Fonts and the map library load from Google Fonts and cdnjs. None of these get a name, email or account from us, because there isn’t one.</p>
+
+    <h2 class="h2">Remembered on this device</h2>
+    <div class="prefs">
+      ${sw('dog', 'I usually hike with a dog', 'Opens every guide in dog mode, with harm levels and advice for dogs.')}
+      ${sw('stings', 'Someone in my group is allergic to stings', 'Raises yellowjackets and Africanized bees to Critical, and puts them first.')}
+    </div>
+
+    <h2 class="h2">Using more than one device</h2>
+    <p>Export your saved places from the Saved screen and import the file on your other phone or computer. You can also copy a link to any place.</p>
+    <div class="cta" style="margin-top:16px"><button class="btn primary" data-act="saved">${icon('download')} Go to saved places</button><button class="btn" data-act="clear-all">Clear everything on this device</button></div>
+    <p class="legal" style="text-align:left">This guide is educational and not a substitute for emergency or medical advice.</p>
+  </main>`;
 }
 
 function locate() {
@@ -242,7 +295,7 @@ function guideScreen() {
       <div class="list">${list.map(h => `<button class="hz" data-act="hazard" data-id="${h.id}">
           <span class="cat cat-${h.cat}">${hzArt(h)}${CATS[h.cat].one}</span>
           <span class="body"><span class="eyebrow">${CATS[h.cat].one}</span><h3>${esc(h.name)}</h3><span class="latin">${esc(h.latin)}</span>
-            <p class="sum">${esc(h.sum)}</p>${state.dog ? `<span class="petline">${icon('dog')}<span>${esc(h.dog)}</span></span>` : ''}</span>
+            <p class="sum">${esc(h.sum)}</p>${state.dog ? `<span class="petline">${icon('dog')}<span>${esc(h.dog)}</span></span>` : ''}${allergic(h) ? `<span class="petline allergy">${icon('warn')}<span>Raised to Critical: a sting allergy is noted on this device. Carry prescribed epinephrine.</span></span>` : ''}</span>
           <span class="side">${harm(levelOf(h), whose)}<span class="common">${sightLine(h)}</span>${icon('chev', 'chev')}</span>
         </button>`).join('')}</div>
       <div class="scale" aria-label="Harm scale">${Object.entries(LEVELS).map(([k, v]) => `<div>${harm(k)}<div>${v.means}</div></div>`).join('')}</div>
@@ -261,10 +314,13 @@ function savedScreen() {
         <div><b>${esc(pk.place.name)}</b><small>${hazardList(pk.guide).length} hazards · saved ${fmtDate(pk.savedAt)}</small></div>
         <div class="pack-actions"><button class="btn primary" data-act="open-pack" data-k="${k}">Open</button>
           ${state.online ? `<button class="btn" data-act="update-pack" data-k="${k}">Update</button>` : ''}
+          <button class="btn" data-act="copy-link" data-k="${k}" aria-label="Copy a link to ${esc(pk.place.name)}">${icon('copy')} Link</button>
           <button class="btn" data-act="remove-pack" data-k="${k}" aria-label="Remove ${esc(pk.place.name)}">Remove</button></div>
       </div>`).join('')}</div><p class="fine" id="storage"></p>`
     : `<div class="state-card">${icon('download')}<div><b>No saved places yet.</b><p>Open any place and tap “Save for offline” before you lose signal on the trail.</p>
         <div class="cta" style="margin-top:14px"><button class="btn primary" data-act="start">Find a place ${icon('arrow')}</button></div></div></div>`}
+    <div class="move"><div><b>Moving to another device?</b><small>No account needed: export a file here, then import it there.</small></div>
+      <div class="pack-actions">${all.length ? `<button class="btn" data-act="export">${icon('download')} Export</button>` : ''}<label class="btn" for="import-file">Import</label></div></div>
     <div class="install-tip">${icon('check')}<p><b>Add it to your home screen</b> so saved packs stay on your phone. On iPhone, tap Share, then “Add to Home Screen.” On Android, tap the menu, then “Install app.”</p></div>
   </main>`;
 }
@@ -272,7 +328,7 @@ function savedScreen() {
 function render() {
   if (leafletMap) { leafletMap.remove(); leafletMap = null; }
   const app = document.getElementById('app');
-  app.innerHTML = ({ welcome, login, locate, guide: guideScreen, saved: savedScreen })[state.screen]();
+  app.innerHTML = ({ welcome, privacy, locate, guide: guideScreen, saved: savedScreen })[state.screen]();
   if (state.screen === 'locate') bindSearch();
   if (state.screen === 'guide' && state.guide) {
     const s = document.getElementById('sort'); if (s) s.onchange = e => { state.sort = e.target.value; render(); };
@@ -351,7 +407,7 @@ function hazardSheet(id) {
   const howCommon = near ? (near.n == null ? esc(near.stateNote) : `${cap(near.tier)} · ${near.n.toLocaleString()} sighting${near.n === 1 ? '' : 's'} within 10 mi`) : 'Documented nearby';
   return `${photo}<p class="eyebrow">${CATS[h.cat].one}</p><h2 id="sheet-title">${esc(h.name)}</h2><p class="latin">${esc(h.latin)}</p>
     <p class="lead">${esc(h.sum)}</p>
-    <div class="facts"><div>${harm(h.level, 'Harm to people')}</div><div>${harm(h.pet, 'Harm to dogs')}</div>
+    <div class="facts"><div>${harm(allergic(h) ? 'critical' : h.level, allergic(h) ? 'Harm to people · allergy noted' : 'Harm to people')}</div><div>${harm(h.pet, 'Harm to dogs')}</div>
       <div><div class="k">How common here</div><div class="v">${howCommon}</div></div><div><div class="k">When</div><div class="v">${esc(h.season)}</div></div></div>
     <div class="sec"><h3>Where it’s found</h3><p>${esc(h.where)}</p></div>
     <div class="sec"><h3>What to look for, from a distance</h3><p>${esc(h.look)}</p></div>
@@ -512,7 +568,21 @@ document.addEventListener('click', async e => {
   if (act === 'scrim') { if (e.target === t) closeSheet(); return; }
   switch (act) {
     case 'home': return go('welcome');
-    case 'login': return go('login');
+    case 'privacy': return go('privacy');
+    case 'pref': { const k = id, v = !prefs()[k]; setPref(k, v); if (k === 'dog') state.dog = v; render(); document.querySelector(`[data-act=pref][data-id=${k}]`)?.focus();
+      return toast(k === 'dog' ? (v ? 'Dog mode will be on for every guide.' : 'Dog mode is off by default.') : (v ? 'Sting allergy noted on this device.' : 'Allergy note removed.')); }
+    case 'clear-all': {
+      if (t.dataset.sure !== '1') { t.dataset.sure = '1'; t.textContent = 'Tap again to clear saved places, preferences and history'; return; }
+      Object.values(STORE).forEach(k => { try { localStorage.removeItem(k); } catch {} });
+      if ('caches' in window) await caches.delete('bt-media-v1');
+      state.dog = false; render(); return toast('Cleared everything on this device.');
+    }
+    case 'export': return exportPacks();
+    case 'copy-link': {
+      const url = placeLink(packs()[t.dataset.k].place);
+      try { await navigator.clipboard.writeText(url); toast('Link copied.'); } catch { toast(url); }
+      return;
+    }
     case 'start': closeSheet(); state.results = null; state.searchMsg = ''; return go('locate');
     case 'saved': closeSheet(); return go('saved');
     case 'back-guide': return go('guide');
@@ -524,7 +594,7 @@ document.addEventListener('click', async e => {
     case 'close-focus-search': closeSheet(); return document.getElementById('q')?.focus();
     case 'retry': return openPlace(state.place);
     case 'cat': state.cat = id; render(); return document.querySelector(`.tab[data-id="${id}"]`)?.focus();
-    case 'dog': state.dog = !state.dog; render(); return document.querySelector('[data-act="dog"]')?.focus();
+    case 'dog': state.dog = !state.dog; setPref('dog', state.dog); render(); return document.querySelector('[data-act="dog"]')?.focus();
     case 'map': state.map = !state.map; render(); return document.querySelector('[data-act="map"]')?.focus();
     case 'offline': {
       const k = placeKey(state.place);
@@ -563,6 +633,7 @@ document.getElementById('cam-input').addEventListener('change', e => {
   if (!sheet || sheet.kind !== 'camera') sheet = { kind: 'camera' };
   setPhoto(f);
 });
+document.getElementById('import-file').addEventListener('change', e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) importPacks(f); });
 addEventListener('online', () => { state.online = true; render(); });
 addEventListener('offline', () => { state.online = false; render(); });
 

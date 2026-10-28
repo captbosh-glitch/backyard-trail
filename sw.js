@@ -1,6 +1,6 @@
 // Backyard & Trail service worker: keeps the app and its illustrations on the phone so saved packs work
 // without signal. Photos are cached as they're viewed, and for every place saved for offline.
-const VERSION = 'bt-shell-v1';
+const VERSION = 'bt-shell-v2';
 const MEDIA = 'bt-media-v1';
 const SHELL = [
   './', 'index.html', 'app.css', 'app.js', 'data.js', 'manifest.webmanifest',
